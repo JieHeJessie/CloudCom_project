@@ -1,0 +1,114 @@
+---
+- file: path=/tmp/nectar state=directory
+
+- copy: src=nectar.py dest=/tmp/nectar/nectar.py mode=0777
+
+- copy: src=tasks.py dest=/tmp/nectar/tasks.py mode=0777
+
+- name: Delete all existing instances on nectar
+  command: invoke delete_all_servers
+  args:
+    chdir: /tmp/nectar
+
+- name: Sleep 30 seconds
+  shell: sleep 30
+
+- name: Generate Key Pair name (<nectar_key>_<timestamp>)
+  shell: echo {{nectar_key}}_$(date +%Y%m%d%H%M%S)
+  register: nectar_keypair_result
+
+- debug: msg="The ssh connection key is {{nectar_keypair_result.stdout}}"
+
+- name: Upload public key for accessing nectar instances
+  command: "invoke add_keypair -p=\"{{ssh_public_key_path}}\" -k=\"{{nectar_keypair_result.stdout}}\""
+  args:
+    chdir: /tmp/nectar
+
+- name: Sleep 30 seconds
+  shell: sleep 30
+
+- name: Provision server couchdb
+  command: "invoke provision_server -i=\"couchdb\" -a=\"{{nectar_flavor}}\" -k=\"{{nectar_keypair_result.stdout}}\" -m=\"{{nectar_image_id}}\" -s=\"http,ssh,icmp,couchdb\""
+  args:
+    chdir: /tmp/nectar
+  register: couchdb_result
+
+- debug: msg="couchdb has been created with IP Address {{couchdb_result.stdout}}"
+
+- name: Create couchdb security group
+  command: invoke create_couchdb_security_group
+  args:
+    chdir: /tmp/nectar
+
+- name: Create tomcat security group
+  command: invoke create_tomcat_security_group
+  args:
+    chdir: /tmp/nectar
+
+- name: Provision server twitter_services
+  command: "invoke provision_server -i=\"twitter_services\" -a=\"{{nectar_flavor}}\" -k=\"{{nectar_keypair_result.stdout}}\" -m=\"{{nectar_image_id}}\" -s=\"http,ssh,icmp,tomcat\""
+  args:
+    chdir: /tmp/nectar
+  register: twitter_services_result
+
+- name: Sleep 30 seconds
+  shell: sleep 30
+
+# - name: add host to inventory
+#   add_host: name={{twitter_services_result.stdout}} groups=couchdb,web_services
+
+- debug: msg="twitter_services has been created with IP Address {{twitter_services_result.stdout}}"
+
+- name: ssh into the new server couchdb to verify the ssh connection
+  shell: "ssh -i {{ssh_private_key_path}} -oStrictHostKeyChecking=no ec2-user@{{couchdb_result.stdout}} uptime"
+  register: first_try_1 
+  ignore_errors: yes
+
+- name: Sleep 20 seconds
+  shell: sleep 20
+  when: first_try_1|failed
+
+- name: ssh into the new server couchdb to verify the ssh connection
+  shell: "ssh -i {{ssh_private_key_path}} -oStrictHostKeyChecking=no ec2-user@{{couchdb_result.stdout}} uptime"
+  register: second_try_1 
+  when: first_try_1|failed
+  ignore_errors: yes
+
+- name: Sleep 20 seconds
+  shell: sleep 20
+  when: second_try_1 |failed
+
+- name: ssh into the new server couchdb to verify the ssh connection
+  shell: "ssh -i {{ssh_private_key_path}} -oStrictHostKeyChecking=no ec2-user@{{couchdb_result.stdout}} uptime"
+  when: first_try_1|failed and second_try_1|failed
+
+- name: ssh into the new server twitter_services to verify the ssh connection
+  shell: "ssh -i {{ssh_private_key_path}} -oStrictHostKeyChecking=no ec2-user@{{twitter_services_result.stdout}} uptime"
+  register: first_try_2 
+  ignore_errors: yes
+
+- name: Sleep 20 seconds
+  shell: sleep 20
+  when: first_try_2 |failed
+
+- name: ssh into the new server twitter_services to verify the ssh connection
+  shell: "ssh -i {{ssh_private_key_path}} -oStrictHostKeyChecking=no ec2-user@{{twitter_services_result.stdout}} uptime"
+  register: second_try_2
+  when: first_try_2 |failed 
+  ignore_errors: yes
+
+- name: Sleep 20 seconds
+  shell: sleep 20
+  when: second_try_2 |failed
+
+- name: ssh into the new server twitter_services to verify the ssh connection
+  shell: "ssh -i {{ssh_private_key_path}} -oStrictHostKeyChecking=no ec2-user@{{twitter_services_result.stdout}} uptime"
+  when: first_try_2|failed and second_try_2|failed
+
+- name: update hosts file
+  template: src=hosts.j2 dest=./hosts mode=0644
+
+
+
+
+ 

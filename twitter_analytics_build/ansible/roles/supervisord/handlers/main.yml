@@ -1,0 +1,20 @@
+---
+- name: run supervisord
+  shell: /usr/bin/supervisord -c {{supervisor.config.file}} creates="{{supervisor.runtime.dir}}/{{supervisor.runtime.socket}}"
+  sudo: True
+
+- name: reread supervisord config
+  shell: /usr/bin/supervisorctl reread
+  sudo: True
+
+- name: add programs to process group
+  shell: supervisorctl add {{item.name}}
+  when: supervisor.programs is defined
+  with_items: supervisor.programs
+  sudo: True
+
+- name: change supervisord programs states
+  shell: supervisorctl start {{item.name}}
+  when: supervisor.programs is defined
+  with_items: supervisor.programs
+  sudo: True

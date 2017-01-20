@@ -1,0 +1,10 @@
+[localhost]
+localhost ansible_connection=local
+
+[couchdb]
+#144.6.233.117
+#144.6.231.221
+
+[web_services]
+144.6.233.119
+#144.6.232.9

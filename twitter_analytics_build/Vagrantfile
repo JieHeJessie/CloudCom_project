@@ -1,0 +1,15 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "ubuntu/trusty64"
+   
+  # Install development dependencies:
+  # 1. Python Nova API Client to iteract with Nectar OpenStack API
+  config.vm.provision "shell", path: "./scripts/nova.sh"
+  # 2. Ansible to run the provisioning scripts
+  config.vm.provision "shell", path: "./scripts/ansible.sh"
+  # 3. Install the python dependencies
+  config.vm.provision "shell", path: "./scripts/python.sh"
+end
+

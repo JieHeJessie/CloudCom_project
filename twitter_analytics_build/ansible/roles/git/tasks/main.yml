@@ -1,0 +1,16 @@
+---
+- name: Install GIT
+  yum: name=git state=present
+  sudo: true
+
+- name: Copy deploy key
+  copy: src={{ssh_deployment_private_key_path}} dest=/home/ec2-user/.ssh/twitter_analytics owner=ec2-user group=ec2-user mode=0400
+
+- name: Add github.com to known_host
+  shell: ssh-keyscan -H github.com >> /home/ec2-user/.ssh/known_hosts
+
+- name: Add bitbucket.org to known_host
+  shell: ssh-keyscan -H bitbucket.org >> /home/ec2-user/.ssh/known_hosts
+
+
+

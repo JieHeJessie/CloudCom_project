@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  vars:
+    nectar_key: twitter_analytics
+    nectar_flavor: 0
+    nectar_image_id: a94e2739-ec7e-4eb6-8c39-8838a9eb0f59
+    ssh_private_key_path: /home/vagrant/.ssh/twitter_analytics
+    ssh_public_key_path: /home/vagrant/.ssh/twitter_analytics.pub
+  roles:
+     - server_provision

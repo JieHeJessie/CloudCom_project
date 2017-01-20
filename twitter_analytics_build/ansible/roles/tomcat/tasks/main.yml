@@ -1,0 +1,17 @@
+- name: Install Tomcat
+  yum: name={{ item }} state=present
+  with_items:
+    - tomcat
+    - tomcat-webapps 
+    - tomcat-admin-webapps 
+    - tomcat-docs-webapp 
+    - tomcat-javadoc
+  sudo: True
+
+- name: start tomcat
+  shell: systemctl start tomcat
+  sudo: True
+
+- name: enable tomcat
+  shell: systemctl enable tomcat
+  sudo: True

@@ -1,0 +1,44 @@
+---
+# - name: Delete the web_services folder
+#   file: path=/home/ec2-user/web_services state=absent
+
+# - name: Download web service project
+#   shell: eval "$(ssh-agent -s)" && ssh-add /home/ec2-user/.ssh/twitter_analytics && git clone {{repo_url_web_services}} /home/ec2-user/web_services
+
+# - name: MVN Install
+#   command: mvn install
+#   args:
+#     chdir: /home/ec2-user/web_services
+
+- name: move the war file to webapps folder
+  copy: src={{web_services_jar_file_path}} dest={{web_services_deploy_path}} mode=0644
+  sudo: True
+  ignore_errors: True
+
+# - name: create log directory
+#   file: path=/var/log/spring/twitter_analytics_web_services state=directory
+#   sudo: True
+
+- name: restart tomcat
+  shell: systemctl restart tomcat
+  sudo: True
+
+# - name: start web in background proc
+#   command: java -Dserver.port=80 -jar target/twitter-analytics-web-services-0.1.0.jar &
+#   args:
+#     chdir: /home/ec2-user/web_services
+#   sudo: True
+
+
+
+
+
+
+
+
+
+
+
+
+
+  

@@ -1,0 +1,15 @@
+---
+- name: Check if java is installed
+  command: java -version
+  ignore_errors: True
+  register: java_check
+  
+- name: download JDK8
+  shell: "wget --no-cookies --no-check-certificate --header \"Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie\" \"http://download.oracle.com/otn-pub/java/jdk/8u60-b27/jdk-8u60-linux-x64.rpm\""
+  sudo: True
+  when: java_check|failed
+  
+- name: install JDK8
+  shell: rpm -ivh jdk-8u60-linux-x64.rpm
+  sudo: True
+  when: java_check|failed

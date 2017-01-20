@@ -1,0 +1,70 @@
+---
+- name: install the 'Development tools' package group
+  yum: name="@Development tools" state=present
+  sudo: True
+
+- name: install packages for CouchDB
+  yum: name={{item}} state=present
+  with_items:
+    - autoconf 
+    - autoconf-archive 
+    - automake 
+    - ncurses-devel 
+    - curl-devel 
+    - erlang-asn1 
+    - erlang-erts 
+    - erlang-eunit 
+    - erlang-os_mon 
+    - erlang-xmerl 
+    - help2man 
+    - js-devel 
+    - libicu-devel 
+    - libtool 
+    - perl-Test-Harness
+  sudo: True
+
+- name: Check if CouchDB is installed
+  shell: sudo /etc/init.d/couchdb status
+  ignore_errors: True
+  register: couchdb_check
+
+- name: Download the CouchDB source files to /usr/local/couchdb
+  get_url: url=http://www.eu.apache.org/dist/couchdb/source/1.6.1/apache-couchdb-1.6.1.tar.gz dest=/usr/local/src
+  sudo: True
+  when: couchdb_check|failed
+ 
+- name: Unarchive the CouchDB source files
+  command: chdir=/usr/local/src tar -xvzf apache-couchdb-1.6.1.tar.gz
+  sudo: True
+  when: couchdb_check|failed
+
+- name: Configure and compile CouchDB from source
+  shell: cd /usr/local/src/apache-couchdb-1.6.1; ./configure --with-erlang=/usr/lib64/erlang/usr/include; make && make install
+  sudo: True
+  when: couchdb_check|failed
+
+- name: Add a couchdb user
+  user: name=couchdb createhome=no shell=/bin/bash system=yes
+  sudo: True
+  when: couchdb_check|failed
+
+- name: Change the ownership of the couchdb directories
+  file: name={{ item }} owner=couchdb group=couchdb mode=0770
+  with_items:
+  - /usr/local/etc/couchdb
+  - /usr/local/var/lib/couchdb
+  - /usr/local/var/log/couchdb
+  - /usr/local/var/run/couchdb 
+  sudo: True
+  when: couchdb_check|failed
+
+- name: Copy the couchdb script from /usr/local/etc/init.d/couchdb to /etc/init.t/couchdb
+  command: cp /usr/local/etc/rc.d/couchdb /etc/init.d/
+  sudo: True
+  when: couchdb_check|failed
+ 
+- name: Ensure that CouchDB is started and runs at boot time
+  service: name=couchdb state=running enabled=yes
+  sudo: True
+  when: couchdb_check|failed
+  

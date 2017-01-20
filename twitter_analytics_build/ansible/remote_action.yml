@@ -1,0 +1,20 @@
+---
+- hosts: couchdb
+  roles: 
+   - couchdb
+
+- hosts: web_services
+  vars:
+    ssh_deployment_private_key_path: /home/vagrant/.ssh/twitter_analytics
+    web_services_repo_url: git@bitbucket.org:lindongl/ccfinal.git
+    web_services_sourcecode_path: ../ccfinal
+    web_services_jar_file_path: ../webapp.war
+    web_services_deploy_path: /usr/share/tomcat/webapps/webapp.war
+  roles:
+    - java
+    - maven
+    - git
+    - tomcat
+    - web_services
+
+
